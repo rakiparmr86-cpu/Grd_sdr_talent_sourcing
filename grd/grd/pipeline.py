@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from time import perf_counter
 
 from sqlalchemy import select
 
@@ -10,10 +11,14 @@ from grd.config import Settings, get_settings
 from grd.db import init_db, make_engine, make_session_factory
 from grd.enrichment import build_providers
 from grd.llm import build_llm
-from grd.models import Company, Contact, Lead, ResearchRun
+from grd.models import Company, Contact, Lead, PipelineRun, ResearchRun
 from grd.schemas import ContactProfile, LeadScore, ScoredLead
 from grd.scoring import load_icp
 from grd.spec import AgentSpec
+
+
+def _ms(t0: float) -> float:
+    return round((perf_counter() - t0) * 1000, 1)
 
 
 class Pipeline:
@@ -78,9 +83,29 @@ class Pipeline:
         icp: str | None = None,
     ) -> ScoredLead:
         icp_name, scoring = self._scoring_for(icp or self._default_icp())
-        research = await self.research.run(domain, contact_hint)
+        steps: list[dict] = []
+
+        t0 = perf_counter()
+        try:
+            research = await self.research.run(domain, contact_hint)
+        except Exception as exc:  # noqa: BLE001 - record the failed run, then re-raise
+            steps.append({"step": "research", "status": "error", "ms": _ms(t0)})
+            self._record_run(icp_name, domain, "error", steps, repr(exc))
+            raise
+        steps.append({
+            "step": "research", "status": "ok", "ms": _ms(t0),
+            "issues": len(research.issues),
+            "capabilities": len(research.capabilities_used),
+            "providers": len(research.providers_used),
+        })
+
+        t1 = perf_counter()
         score = await scoring.run(research.profile)
+        steps.append({"step": "scoring", "status": "ok", "ms": _ms(t1)})
+
         lead_id = self._persist(icp_name, research, score)
+        self._record_run(icp_name, domain, "ok", steps, None)
+
         return ScoredLead(
             domain=research.profile.domain,
             lead_id=lead_id,
@@ -92,6 +117,25 @@ class Pipeline:
             issues=research.issues,
             score=score,
         )
+
+    def _record_run(
+        self, icp_name: str, target: str, status: str, steps: list[dict], error: str | None
+    ) -> None:
+        """One pipeline_runs row per execution. Never breaks scoring if it fails."""
+        try:
+            with self.Session.begin() as s:
+                s.add(PipelineRun(
+                    vertical="sdr",
+                    agent=self.settings.agent,
+                    target=target,
+                    status=status,
+                    steps_json=steps,
+                    cost_usd=0.0,   # mock/ollama are free; a hosted model would fill this
+                    tokens=0,
+                    error=error,
+                ))
+        except Exception:  # noqa: BLE001
+            pass
 
     async def score_batch(
         self,

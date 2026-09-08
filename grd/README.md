@@ -99,6 +99,14 @@ curl -s -X POST http://localhost:8000/api/candidates/score \
   -H "content-type: application/json" -d "{\"handles\":[\"tiangolo\"]}"
 ```
 
+### Metrics ([docs/metrics.md](docs/metrics.md))
+
+```bash
+python -m grd.cli metrics            # funnel / quality / reliability / economics
+```
+
+`GET /api/metrics` (JSON) · `GET /dashboard` (self-contained HTML page).
+
 ### Tests
 
 ```bash

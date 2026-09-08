@@ -32,7 +32,14 @@ Shared:
       pgvector, JSON on SQLite); `deploy/docker-compose.yml` (Postgres+pgvector +
       Ollama + API); Alembic scaffold + committed initial migration. Full
       write-up: `docs/ARCHITECTURE.md`.
-- [ ] Actually write to `pipeline_runs` from `Pipeline` (cost/tokens/timing)
+- [x] Write to `pipeline_runs` from `Pipeline` (per-step timing + status; cost/tokens
+      plumbed, 0 with local LLMs)
+- [x] **Metrics dashboard** — `grd/metrics.py::sdr_metrics` (funnel / quality /
+      reliability / economics from `pipeline_runs` + `research_runs` + `leads` +
+      `outreach_drafts` + `crm_syncs`), `GET /api/metrics`, `GET /dashboard`
+      (self-contained HTML), `grd.cli metrics [--json] [--icp]`. See `docs/metrics.md`.
+- [ ] Thread real LLM/provider usage into `pipeline_runs.cost_usd` / `.tokens`
+- [ ] Scoring rank-correlation vs labelled outcomes (needs real `scoring_golden.jsonl`)
 
 SDR:
 - [x] `EnrichmentProvider` + `mock` + `web`; ICP format; companies/contacts/research_runs/leads

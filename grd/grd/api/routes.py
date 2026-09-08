@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
 
+from grd.metrics import sdr_metrics
 from grd.models import Company, Lead, ResearchRun
 from grd.schemas import ScoredLead, ScoreRequest
 
@@ -11,6 +12,13 @@ router = APIRouter()
 
 def _pipeline(request: Request):
     return request.app.state.pipeline
+
+
+@router.get("/metrics", tags=["metrics"])
+async def metrics(request: Request, icp: str | None = None) -> dict:
+    pipe = _pipeline(request)
+    with pipe.Session() as s:
+        return sdr_metrics(s, icp=icp)
 
 
 @router.post("/leads/score", response_model=list[ScoredLead], tags=["leads"])

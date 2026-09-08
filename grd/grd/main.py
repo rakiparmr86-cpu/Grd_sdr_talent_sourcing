@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
 from grd import __version__
 from grd.api.routes import router
 from grd.config import get_settings
+from grd.dashboard import DASHBOARD_HTML
 from grd.pipeline import Pipeline
 from grd.recruiting.api import router as recruiting_router
 from grd.recruiting.pipeline import RecruitingPipeline
@@ -19,6 +21,10 @@ def create_app() -> FastAPI:
 
     app.include_router(router, prefix="/api")
     app.include_router(recruiting_router, prefix="/api")
+
+    @app.get("/dashboard", response_class=HTMLResponse, tags=["metrics"])
+    async def dashboard() -> str:
+        return DASHBOARD_HTML
 
     @app.get("/health", tags=["meta"])
     async def health() -> dict:

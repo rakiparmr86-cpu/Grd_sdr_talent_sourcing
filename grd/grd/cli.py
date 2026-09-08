@@ -152,6 +152,40 @@ async def _run_sourcing(args: argparse.Namespace) -> int:
     return 0
 
 
+async def _run_metrics(args: argparse.Namespace) -> int:
+    import json
+
+    from grd.metrics import sdr_metrics
+
+    pipe = Pipeline(get_settings())
+    with pipe.Session() as s:
+        m = sdr_metrics(s, icp=args.icp)
+
+    if args.json:
+        print(json.dumps(m, indent=2))
+        return 0
+
+    f, q, rel, ec = m["funnel"], m["quality"], m["reliability"], m["economics"]
+    print(f"SDR metrics  ({m['icp']})  as of {m['generated_at']}")
+    print("-" * 56)
+    print("FUNNEL")
+    for k in ("researched", "scored", "qualified", "drafted", "sent", "crm_synced",
+              "replied", "positive_replies", "meetings_booked"):
+        print(f"  {k:<18} {f[k]}")
+    print(f"  enrichment_hit_rate {f['enrichment_hit_rate']}")
+    print(f"  qualify_rate        {f['qualify_rate']}   tiers {f['tier_counts']}")
+    print("QUALITY")
+    print(f"  confidence mean/p50 {q['confidence_mean']} / {q['confidence_p50']}")
+    print(f"  research_issue_rate {q['research_issue_rate']}   {q['issue_breakdown']}")
+    print("RELIABILITY")
+    print(f"  pipeline_runs       {rel['pipeline_runs']}   success {rel['pipeline_success_rate']}")
+    print(f"  step latency p50    {rel['step_latency_ms_p50']}")
+    print(f"  enrichment_error    {rel['enrichment_error_rate']}   site_blocked {rel['site_blocked_rate']}")
+    print("ECONOMICS")
+    print(f"  cost usd / tokens   {ec['total_cost_usd']} / {ec['total_tokens']}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="grd", description="GRD AI SDR - research + scoring")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -167,6 +201,11 @@ def main(argv: list[str] | None = None) -> int:
     source.add_argument("--rubric", default=None, help="rubric name (default: GRD_RUBRIC env)")
     source.add_argument("--out", default=None, help="optional path to write results CSV")
     source.set_defaults(func=_run_sourcing)
+
+    mx = sub.add_parser("metrics", help="[SDR] print the dashboard metrics from the DB")
+    mx.add_argument("--icp", default=None, help="filter leads by ICP name")
+    mx.add_argument("--json", action="store_true", help="emit raw JSON")
+    mx.set_defaults(func=_run_metrics)
 
     args = parser.parse_args(argv)
     return asyncio.run(args.func(args))
