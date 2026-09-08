@@ -13,6 +13,7 @@ from collections import Counter, defaultdict
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from grd.classify import gate_a_route
 from grd.models import CrmSync, Lead, OutreachDraft, PipelineRun, ResearchRun
 
 
@@ -38,7 +39,9 @@ def _mean(values: list[float]) -> float | None:
     return round(sum(values) / len(values), 4) if values else None
 
 
-def sdr_metrics(session: Session, *, icp: str | None = None) -> dict:
+def sdr_metrics(
+    session: Session, *, icp: str | None = None, gate_a_threshold: float | None = None
+) -> dict:
     lead_q = select(Lead)
     if icp:
         lead_q = lead_q.where(Lead.icp == icp)
@@ -59,12 +62,20 @@ def sdr_metrics(session: Session, *, icp: str | None = None) -> dict:
     sent = sum(1 for d in drafts if d.status == "sent")
     synced_ok = sum(1 for c in syncs if c.result == "ok")
 
+    gate_auto = gate_human = None
+    if gate_a_threshold is not None:
+        routes = [gate_a_route(x.score_value, gate_a_threshold) for x in leads]
+        gate_auto = routes.count("auto")
+        gate_human = routes.count("human")
+
     funnel = {
         "researched": researched,
         "enrichment_hit_rate": _ratio(enrichment_hits, researched),
         "scored": scored,
         "qualified": qualified,
         "qualify_rate": _ratio(qualified, scored),
+        "gate_a_auto": gate_auto,
+        "gate_a_human": gate_human,
         "tier_counts": {t: tiers.get(t, 0) for t in ("A", "B", "C", "D")},
         "drafted": drafted,
         "draft_approval_rate": _ratio(approved, drafted),

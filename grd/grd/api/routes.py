@@ -17,8 +17,9 @@ def _pipeline(request: Request):
 @router.get("/metrics", tags=["metrics"])
 async def metrics(request: Request, icp: str | None = None) -> dict:
     pipe = _pipeline(request)
+    threshold = pipe.spec.gate_a_threshold() if pipe.spec else None
     with pipe.Session() as s:
-        return sdr_metrics(s, icp=icp)
+        return sdr_metrics(s, icp=icp, gate_a_threshold=threshold)
 
 
 @router.post("/leads/score", response_model=list[ScoredLead], tags=["leads"])

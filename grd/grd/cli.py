@@ -158,8 +158,9 @@ async def _run_metrics(args: argparse.Namespace) -> int:
     from grd.metrics import sdr_metrics
 
     pipe = Pipeline(get_settings())
+    threshold = pipe.spec.gate_a_threshold() if pipe.spec else None
     with pipe.Session() as s:
-        m = sdr_metrics(s, icp=args.icp)
+        m = sdr_metrics(s, icp=args.icp, gate_a_threshold=threshold)
 
     if args.json:
         print(json.dumps(m, indent=2))
@@ -174,6 +175,7 @@ async def _run_metrics(args: argparse.Namespace) -> int:
         print(f"  {k:<18} {f[k]}")
     print(f"  enrichment_hit_rate {f['enrichment_hit_rate']}")
     print(f"  qualify_rate        {f['qualify_rate']}   tiers {f['tier_counts']}")
+    print(f"  gate A  auto/human  {f['gate_a_auto']} / {f['gate_a_human']}")
     print("QUALITY")
     print(f"  confidence mean/p50 {q['confidence_mean']} / {q['confidence_p50']}")
     print(f"  research_issue_rate {q['research_issue_rate']}   {q['issue_breakdown']}")

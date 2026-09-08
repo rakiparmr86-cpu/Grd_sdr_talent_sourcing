@@ -7,6 +7,7 @@ from sqlalchemy import select
 
 from grd.agents.research import ResearchAgent, ResearchResult
 from grd.agents.scoring import ScoringAgent
+from grd.classify import gate_a_route
 from grd.config import Settings, get_settings
 from grd.db import init_db, make_engine, make_session_factory
 from grd.enrichment import build_providers
@@ -106,6 +107,7 @@ class Pipeline:
         lead_id = self._persist(icp_name, research, score)
         self._record_run(icp_name, domain, "ok", steps, None)
 
+        threshold = self.spec.gate_a_threshold() if self.spec else None
         return ScoredLead(
             domain=research.profile.domain,
             lead_id=lead_id,
@@ -115,6 +117,7 @@ class Pipeline:
             providers_used=research.providers_used,
             capabilities_used=research.capabilities_used,
             issues=research.issues,
+            gate_a=gate_a_route(score.value, threshold),
             score=score,
         )
 

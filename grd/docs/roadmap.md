@@ -40,6 +40,11 @@ Shared:
       (self-contained HTML), `grd.cli metrics [--json] [--icp]`. See `docs/metrics.md`.
 - [ ] Thread real LLM/provider usage into `pipeline_runs.cost_usd` / `.tokens`
 - [ ] Scoring rank-correlation vs labelled outcomes (needs real `scoring_golden.jsonl`)
+- [x] **AI vs traditional split** — `grd/classify.py` (deterministic:
+      normalize_domain/email, dedup keys, `payload_hash`, `is_suppressed`,
+      `gate_a_route`, `classify_reply`); `ScoredLead.gate_a` + `funnel.gate_a_*`
+      metrics; `tests/test_ai_boundary.py` enforces that only allow-listed
+      modules import `grd.llm`. Policy: `docs/ai-vs-traditional.md`.
 
 SDR:
 - [x] `EnrichmentProvider` + `mock` + `web`; ICP format; companies/contacts/research_runs/leads

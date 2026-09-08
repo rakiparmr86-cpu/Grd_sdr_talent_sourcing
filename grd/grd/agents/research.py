@@ -10,6 +10,7 @@ from grd.enrichment.base import (
     assemble_profile,
     recompute_completeness,
 )
+from grd.classify import normalize_domain as _clean_domain
 from grd.enrichment.capabilities import ALL_CAPABILITIES, COMPANY_LOOKUP, Fact
 from grd.llm.base import LLM
 from grd.schemas import CompanyProfile, ContactProfile, ResearchIssue
@@ -194,14 +195,6 @@ class ResearchAgent:
                     f"(missing: {', '.join(profile.unknown_fields)})"
                 ),
             ))
-
-
-def _clean_domain(raw: str) -> str:
-    raw = raw.strip().lower()
-    for prefix in ("https://", "http://", "www."):
-        if raw.startswith(prefix):
-            raw = raw[len(prefix):]
-    return raw.split("/")[0].strip()
 
 
 def _parse_date(value: str | None) -> dt.date | None:

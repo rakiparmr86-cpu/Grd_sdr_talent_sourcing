@@ -99,6 +99,13 @@ curl -s -X POST http://localhost:8000/api/candidates/score \
   -H "content-type: application/json" -d "{\"handles\":[\"tiangolo\"]}"
 ```
 
+### AI vs traditional split
+
+Deterministic code (normalization, dedup, `payload_hash`, suppression checks,
+Gate-A routing, reply parsing) lives in `grd/classify.py` and **must not** use an
+LLM — `tests/test_ai_boundary.py` enforces that only allow-listed modules import
+`grd.llm`. Policy + table: [docs/ai-vs-traditional.md](docs/ai-vs-traditional.md).
+
 ### Metrics ([docs/metrics.md](docs/metrics.md))
 
 ```bash

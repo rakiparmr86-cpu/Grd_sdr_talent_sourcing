@@ -101,6 +101,7 @@ class ScoredLead(BaseModel):
     providers_used: list[str] = Field(default_factory=list)
     capabilities_used: list[str] = Field(default_factory=list)
     issues: list[ResearchIssue] = Field(default_factory=list)
+    gate_a: str = "human"          # deterministic route: "auto" | "human"
     score: LeadScore
 
 
