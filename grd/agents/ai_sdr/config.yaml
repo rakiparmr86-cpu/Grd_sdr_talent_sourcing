@@ -1,0 +1,31 @@
+# AI SDR agent - all the knobs for one campaign live here.
+# The platform (grd/ package) reads this; it contains no business logic itself.
+agent: ai_sdr
+label: AI Sales Development Rep
+
+llm:
+  # provider: env  -> use GRD_LLM_PROVIDER ; or force "mock" / "ollama"
+  provider: env
+  summary_model: llama3.1
+  scoring_model: llama3.1
+
+research:
+  tools_allow: research/tools.allow          # capability allow-list (one per line)
+  prompt: research/prompts/summarize.md
+  stale_after_months: 24
+  retries: 1
+  timeout_seconds: 10
+
+scoring:
+  default_icp: grd_staffing                  # -> scoring/icp/<name>.yaml
+  prompt: scoring/prompts/interpret_signals.md
+  max_llm_adjustment: 10
+
+# human-in-the-loop gates (steps not built yet; thresholds defined now)
+gates:
+  gate_a_auto_threshold: 62      # score >= this auto-advances to Copy; below -> human triage
+  gate_b: manual_review_all      # every draft reviewed before CRM write / send
+
+limits:
+  max_cost_usd_per_lead: 0.05
+  max_steps: 12

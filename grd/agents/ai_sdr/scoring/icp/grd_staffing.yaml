@@ -1,0 +1,60 @@
+name: grd_staffing
+label: GRD Staffing & Recruitment Services
+description: >
+  Companies likely to need external hiring / recruitment support: growing,
+  recently funded, actively hiring, in talent-scarce sectors.
+
+industries:
+  include:
+    - software
+    - information technology
+    - saas
+    - fintech
+    - e-commerce
+    - healthtech
+    - edtech
+    - logistics technology
+    - cybersecurity
+    - artificial intelligence
+  exclude:
+    - staffing and recruiting
+    - recruitment
+    - government
+    - non-profit
+
+size_bands:
+  ideal: ["51-200", "201-500", "501-1000"]
+  acceptable: ["11-50", "1001-5000"]
+
+geographies:
+  include: [IN, US, AE, GB, SG, DE, AU]
+
+signals:
+  funding_recent_months: 12
+  target_open_roles: 8
+  target_headcount_growth_pct_6mo: 12
+
+# points, should sum to 100
+weights:
+  industry: 22
+  size: 14
+  geography: 10
+  funding_recency: 20
+  open_roles: 22
+  headcount_growth: 12
+
+thresholds:
+  A: 78
+  B: 62
+  C: 48
+  qualify: 62
+
+max_llm_adjustment: 10
+
+important_fields:
+  - industry
+  - size_band
+  - hq_country
+  - funding
+  - open_roles
+  - headcount_growth_pct_6mo

@@ -1,0 +1,44 @@
+name: backend_engineer_india
+label: Senior Backend Engineer (India, remote OK)
+role_family: backend
+
+seniority:
+  target: senior            # junior | mid | senior | staff
+  min_years: 5
+
+location:
+  allowed_countries: [IN]
+  remote_ok: true
+
+skills:
+  must_have: [python, postgresql, aws]
+  nice_to_have: [kubernetes, kafka, go, terraform, fastapi, redis]
+
+signals:
+  min_public_repos: 5
+  min_followers: 20
+  recent_activity_months: 6
+
+# points, should sum to 100
+weights:
+  skills_must_have: 34
+  skills_nice_to_have: 12
+  seniority: 18
+  location: 10
+  activity: 12
+  portfolio_strength: 14
+
+thresholds:
+  A: 78
+  B: 62
+  C: 48
+  qualify: 62
+
+max_llm_adjustment: 10
+
+important_fields:
+  - skills
+  - years_experience
+  - location_country
+  - public_repos
+  - last_active

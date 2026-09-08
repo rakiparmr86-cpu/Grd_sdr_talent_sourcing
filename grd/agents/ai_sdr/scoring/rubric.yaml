@@ -1,0 +1,19 @@
+# Cross-ICP scoring config for the SDR scoring agent.
+# Per-segment values (industries, weights, thresholds) live in scoring/icp/<name>.yaml.
+default_icp: grd_staffing
+
+components:
+  - industry
+  - size
+  - geography
+  - funding_recency
+  - open_roles
+  - headcount_growth
+
+rules:
+  weights_must_sum_to: 100
+  scalar_conflict: first-source-wins   # later agreeing sources -> corroborating provenance
+  llm_adjustment: bounded              # |adj| <= icp.max_llm_adjustment
+  tier_from: icp.thresholds            # A/B/C, else D
+  qualified_when: "value >= icp.thresholds.qualify"
+  confidence: "share of icp.important_fields that were sourced"

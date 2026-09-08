@@ -1,0 +1,8 @@
+# Capabilities the research agent may call. One per line. '#' comments allowed.
+# Remove a line to forbid that capability for this campaign.
+company_lookup
+contact_lookup
+funding_lookup
+tech_lookup
+news_search
+web_fetch

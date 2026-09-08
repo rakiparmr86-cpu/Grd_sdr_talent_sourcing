@@ -1,0 +1,10 @@
+# PLACEHOLDER - scorer for the Copy agent (step 2.3), not wired yet.
+# Each generated draft is scored 0-1 on:
+checks:
+  personalization:   "references >= 1 concrete fact from the research profile"
+  grounded:          "makes no claim absent from research or voice_corpus"
+  tone_match:        "cosine similarity to nearest voice_corpus example >= 0.6"
+  has_cta:           "contains a clear call to action"
+  compliant:        "email has sender identity + one-line opt-out; within word cap"
+  length:            "word_count <= campaign.max_words"
+pass_threshold: 0.8

@@ -1,0 +1,27 @@
+# PLACEHOLDER - CRM agent (workflow step 2.4) is not built yet.
+# Maps our typed fields -> CRM properties. Writes go to AI-namespaced props so
+# they never clobber a human-edited field. Start with one CRM.
+crm: hubspot            # hubspot | salesforce | pipedrive
+
+dedupe_on: domain
+
+company:
+  domain:                  domain
+  name:                    name
+  industry:                industry
+  ai_fit_score:            score.value
+  ai_fit_tier:             score.tier
+  ai_research_summary:     research.summary
+  ai_hiring_signals:       score.matched_signals
+  ai_last_run:             _now
+
+contact:
+  email:                   contact.email
+  full_name:               contact.name
+  title:                   contact.title
+
+note:
+  body:                    outreach_draft.body      # attached, not sent
+  subject:                 outreach_draft.subject
+
+suppression_check: true   # skip enrollment/send if domain or email is suppressed

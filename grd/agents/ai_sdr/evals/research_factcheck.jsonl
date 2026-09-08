@@ -1,0 +1,3 @@
+{"check": "no_unsourced_facts", "detail": "every field on the profile must have a matching provenance entry", "note": "enforced in code; this row documents the invariant for the eval runner"}
+{"check": "summary_grounding", "domain": "example.com", "forbidden_claim": "raised a Series C", "reason": "not present in FACTS", "note": "SYNTHETIC - the LLM summary must not introduce this"}
+{"check": "stale_flagged", "domain": "example.com", "funding_date": "2019-01-01", "expect_issue": "stale_data", "note": "SYNTHETIC - funding older than research.stale_after_months must be flagged, not dropped"}

@@ -1,0 +1,45 @@
+# AI SDR workflow: research -> scoring -> gate A -> copy -> gate B -> CRM
+# `status: active` steps run today; `planned` steps are wired later.
+name: ai_sdr
+description: Company domain -> qualified, drafted, CRM-synced lead.
+
+steps:
+  - id: research
+    status: active
+    impl: "grd.agents.research:ResearchAgent"
+    tools_allow: research/tools.allow
+    prompt: research/prompts/summarize.md
+    produces: CompanyProfile + provenance + issues
+
+  - id: scoring
+    status: active
+    impl: "grd.agents.scoring:ScoringAgent"
+    config: scoring/icp/grd_staffing.yaml
+    prompt: scoring/prompts/interpret_signals.md
+    produces: LeadScore (value, tier, qualified, confidence, rationale)
+
+  - id: gate_a
+    status: planned
+    type: human_approval
+    rule: "score.value < gates.gate_a_auto_threshold"
+    on_reject: drop
+    note: auto-advance strong leads; humans triage the rest before spend
+
+  - id: copy
+    status: planned
+    impl: "grd.agents.copy:CopyAgent"
+    prompt: copy/prompts/draft.md
+    rag: copy/voice_corpus
+    produces: OutreachDraft (channel, subject, body, personalization_used)
+
+  - id: gate_b
+    status: planned
+    type: human_approval
+    rule: always
+    note: every draft reviewed/edited before it is written anywhere
+
+  - id: crm
+    status: planned
+    impl: "grd.integrations.crm:CrmAgent"
+    config: crm/field_map.yaml
+    produces: CrmSync (crm_object_id, action, synced_at)

@@ -1,0 +1,7 @@
+# Install ON TOP of requirements.txt when deploying on Postgres:
+#   pip install -r requirements.txt -r requirements-postgres.txt
+-r requirements.txt
+
+psycopg[binary]==3.2.3      # Postgres driver -> postgresql+psycopg://...
+pgvector==0.3.6             # vector(N) column type for doc_chunks.embedding
+alembic==1.14.0             # schema migrations (dev uses create_all; prod uses this)
