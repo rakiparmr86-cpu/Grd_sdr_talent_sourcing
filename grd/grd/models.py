@@ -39,7 +39,12 @@ class Campaign(Base):
     icp: Mapped[str] = mapped_column(String(64), default="grd_staffing")
     status: Mapped[str] = mapped_column(String(16), default="active")   # active|paused|done
     offer: Mapped[str | None] = mapped_column(Text)
-    sender_identity: Mapped[str | None] = mapped_column(String(255))    # outreach compliance
+    # --- outreach compliance (CAN-SPAM / GDPR / PECR / DPDP) ---
+    sender_identity: Mapped[str | None] = mapped_column(String(255))
+    sender_address: Mapped[str | None] = mapped_column(String(512))     # physical mailing address
+    unsubscribe_url: Mapped[str | None] = mapped_column(String(512))
+    unsubscribe_mailto: Mapped[str | None] = mapped_column(String(255))
+    consent_basis: Mapped[str] = mapped_column(String(32), default="legitimate_interest")
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_utcnow)
     updated_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -70,6 +75,10 @@ class Contact(Base):
     linkedin_url: Mapped[str | None] = mapped_column(String(512))
     source: Mapped[str | None] = mapped_column(String(128))
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    region: Mapped[str] = mapped_column(String(16), default="UNKNOWN")   # EU|UK|US|IN|...
+    consent_status: Mapped[str] = mapped_column(String(16), default="none")  # none|opt_in|opt_out
+    consent_source: Mapped[str | None] = mapped_column(String(128))
+    consent_at: Mapped[dt.datetime | None] = mapped_column(DateTime)
 
 
 class ResearchRun(Base):
@@ -152,6 +161,35 @@ class Suppression(Base):
     kind: Mapped[str] = mapped_column(String(16), default="email")        # email|domain
     reason: Mapped[str] = mapped_column(String(255), default="")
     added_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_utcnow)
+
+
+class ConsentEvent(Base):
+    """Audit trail for every opt-in / opt-out / preference / erasure."""
+
+    __tablename__ = "consent_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    subject: Mapped[str] = mapped_column(String(255), index=True)         # email or domain
+    kind: Mapped[str] = mapped_column(String(16), default="email")
+    action: Mapped[str] = mapped_column(String(24))                       # opt_in|opt_out|preference|erasure
+    source: Mapped[str] = mapped_column(String(128), default="")
+    note: Mapped[str] = mapped_column(String(255), default="")
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_utcnow)
+
+
+class DeletionRequest(Base):
+    """Data-subject erasure request + what it removed."""
+
+    __tablename__ = "deletion_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    subject: Mapped[str] = mapped_column(String(255), index=True)
+    kind: Mapped[str] = mapped_column(String(16), default="domain")
+    reason: Mapped[str] = mapped_column(String(255), default="")
+    status: Mapped[str] = mapped_column(String(16), default="received")   # received|completed|failed
+    deleted_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    requested_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_utcnow)
+    completed_at: Mapped[dt.datetime | None] = mapped_column(DateTime)
 
 
 # ---------------------------------------------------------------------------

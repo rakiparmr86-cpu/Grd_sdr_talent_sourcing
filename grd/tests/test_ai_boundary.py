@@ -25,7 +25,7 @@ AI_MODULES = {
 
 # Modules that must be provably LLM-free (the "traditional automation" half).
 DETERMINISTIC_MODULES = {
-    "classify.py", "metrics.py", "dashboard.py",
+    "classify.py", "compliance.py", "metrics.py", "dashboard.py",
     "db.py", "dbtypes.py", "models.py", "config.py", "spec.py",
     "enrichment/base.py", "enrichment/capabilities.py",
     "enrichment/mock.py", "enrichment/web.py", "enrichment/__init__.py",

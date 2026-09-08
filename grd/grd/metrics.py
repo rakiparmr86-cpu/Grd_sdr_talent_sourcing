@@ -14,7 +14,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from grd.classify import gate_a_route
-from grd.models import CrmSync, Lead, OutreachDraft, PipelineRun, ResearchRun
+from grd.compliance import outreach_posture, region_for_country
+from grd.models import Company, CrmSync, Lead, OutreachDraft, PipelineRun, ResearchRun
 
 
 def _ratio(n: int, d: int) -> float | None:
@@ -42,10 +43,11 @@ def _mean(values: list[float]) -> float | None:
 def sdr_metrics(
     session: Session, *, icp: str | None = None, gate_a_threshold: float | None = None
 ) -> dict:
-    lead_q = select(Lead)
+    lead_q = select(Lead, Company).join(Company, Company.id == Lead.company_id)
     if icp:
         lead_q = lead_q.where(Lead.icp == icp)
-    leads = list(session.scalars(lead_q))
+    lead_rows = list(session.execute(lead_q).all())
+    leads = [lr[0] for lr in lead_rows]
     research_runs = list(session.scalars(select(ResearchRun)))
     runs = list(session.scalars(select(PipelineRun).where(PipelineRun.vertical == "sdr")))
     drafts = list(session.scalars(select(OutreachDraft)))
@@ -67,6 +69,16 @@ def sdr_metrics(
         routes = [gate_a_route(x.score_value, gate_a_threshold) for x in leads]
         gate_auto = routes.count("auto")
         gate_human = routes.count("human")
+
+    # ---- compliance posture (region-only, deterministic) -------------
+    regions = Counter(region_for_country(c.hq_country) for _, c in lead_rows)
+    postures = Counter(outreach_posture(r)[0] for r in regions.elements())
+    compliance = {
+        "regions": dict(regions),
+        "outreach_allow": postures.get("allow", 0),
+        "outreach_manual_only": postures.get("manual_only", 0),
+        "outreach_block": postures.get("block", 0),
+    }
 
     funnel = {
         "researched": researched,
@@ -148,6 +160,7 @@ def sdr_metrics(
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "icp": icp or "all",
         "funnel": funnel,
+        "compliance": compliance,
         "quality": quality,
         "reliability": reliability,
         "economics": economics,

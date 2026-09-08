@@ -8,12 +8,13 @@ from sqlalchemy import select
 from grd.agents.research import ResearchAgent, ResearchResult
 from grd.agents.scoring import ScoringAgent
 from grd.classify import gate_a_route
+from grd.compliance import outreach_posture, region_for_country
 from grd.config import Settings, get_settings
 from grd.db import init_db, make_engine, make_session_factory
 from grd.enrichment import build_providers
 from grd.llm import build_llm
 from grd.models import Company, Contact, Lead, PipelineRun, ResearchRun
-from grd.schemas import ContactProfile, LeadScore, ScoredLead
+from grd.schemas import ComplianceInfo, ContactProfile, LeadScore, ScoredLead
 from grd.scoring import load_icp
 from grd.spec import AgentSpec
 
@@ -108,6 +109,8 @@ class Pipeline:
         self._record_run(icp_name, domain, "ok", steps, None)
 
         threshold = self.spec.gate_a_threshold() if self.spec else None
+        region = region_for_country(research.profile.hq_country)
+        posture, reasons = outreach_posture(region)
         return ScoredLead(
             domain=research.profile.domain,
             lead_id=lead_id,
@@ -118,6 +121,7 @@ class Pipeline:
             capabilities_used=research.capabilities_used,
             issues=research.issues,
             gate_a=gate_a_route(score.value, threshold),
+            compliance=ComplianceInfo(region=region, outreach=posture, reasons=reasons),
             score=score,
         )
 
@@ -189,6 +193,7 @@ class Pipeline:
                     company_id=company.id, name=contact.name, title=contact.title,
                     email=contact.email, linkedin_url=contact.linkedin_url,
                     source=contact.source,
+                    region=region_for_country(profile.hq_country),
                 )
                 s.add(row)
                 s.flush()

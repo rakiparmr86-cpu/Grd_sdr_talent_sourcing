@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 from sqlalchemy import select
 
+from grd.compliance import (
+    ComplianceDecision,
+    erase_subject,
+    outreach_gate,
+    region_for_country,
+)
 from grd.metrics import sdr_metrics
-from grd.models import Company, Lead, ResearchRun
+from grd.models import Company, Lead, ResearchRun, Suppression
 from grd.schemas import ScoredLead, ScoreRequest
 
 router = APIRouter()
@@ -93,3 +100,56 @@ async def get_lead(lead_id: int, request: Request) -> dict:
                 "provenance": (company.profile_json or {}).get("provenance", []),
             },
         }
+
+
+# --- compliance -------------------------------------------------------
+
+class SuppressRequest(BaseModel):
+    value: str
+    kind: str = "email"          # email | domain
+    reason: str = "manual"
+
+
+class EraseRequest(BaseModel):
+    email: str | None = None
+    domain: str | None = None
+    reason: str = "data subject erasure request"
+
+
+@router.get("/compliance/check", tags=["compliance"])
+async def compliance_check(
+    request: Request, domain: str | None = None, email: str | None = None,
+    country: str | None = None, channel: str = "email", mode: str = "automated",
+) -> dict:
+    pipe = _pipeline(request)
+    region = region_for_country(country)
+    with pipe.Session() as s:
+        d: ComplianceDecision = outreach_gate(
+            session=s, region=region, email=email, domain=domain,
+            channel=channel, mode=mode,
+        )
+    return {"outcome": d.outcome, "region": d.region, "reasons": d.reasons}
+
+
+@router.post("/compliance/suppress", tags=["compliance"])
+async def compliance_suppress(payload: SuppressRequest, request: Request) -> dict:
+    pipe = _pipeline(request)
+    with pipe.Session.begin() as s:
+        exists = s.scalar(
+            select(Suppression.id).where(
+                Suppression.value == payload.value, Suppression.kind == payload.kind
+            )
+        )
+        if not exists:
+            s.add(Suppression(value=payload.value.strip().lower(), kind=payload.kind,
+                              reason=payload.reason))
+    return {"status": "suppressed", "value": payload.value, "kind": payload.kind}
+
+
+@router.post("/compliance/erase", tags=["compliance"])
+async def compliance_erase(payload: EraseRequest, request: Request) -> dict:
+    if not (payload.email or payload.domain):
+        raise HTTPException(status_code=400, detail="email or domain required")
+    pipe = _pipeline(request)
+    with pipe.Session.begin() as s:
+        return erase_subject(s, email=payload.email, domain=payload.domain, reason=payload.reason)

@@ -106,6 +106,15 @@ Gate-A routing, reply parsing) lives in `grd/classify.py` and **must not** use a
 LLM — `tests/test_ai_boundary.py` enforces that only allow-listed modules import
 `grd.llm`. Policy + table: [docs/ai-vs-traditional.md](docs/ai-vs-traditional.md).
 
+### Compliance ([docs/compliance.md](docs/compliance.md))
+
+`grd/compliance.py` — region classification, the pre-send `outreach_gate`
+(suppression + GDPR/PECR/DPDP geo + CAN-SPAM campaign completeness + LinkedIn
+ToS), `email_footer` / `validate_email_body`, `redact_pii`, CRM AI-namespace
+guard, retention purge, and `erase_subject` with a `consent_events` /
+`deletion_requests` audit trail. Every lead gets a `compliance` posture at
+scoring time. `GET /api/compliance/check`, `POST /api/compliance/{suppress,erase}`.
+
 ### Metrics ([docs/metrics.md](docs/metrics.md))
 
 ```bash

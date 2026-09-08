@@ -45,6 +45,16 @@ Shared:
       `gate_a_route`, `classify_reply`); `ScoredLead.gate_a` + `funnel.gate_a_*`
       metrics; `tests/test_ai_boundary.py` enforces that only allow-listed
       modules import `grd.llm`. Policy: `docs/ai-vs-traditional.md`.
+- [x] **Compliance, designed in** — `grd/compliance.py`: `region_for_country`,
+      `outreach_posture` / `outreach_gate` (suppression + geo + CAN-SPAM campaign
+      completeness + LinkedIn ToS), `email_footer` / `validate_email_body`,
+      `redact_pii`, `assert_ai_namespaced`, `purge_expired_research`,
+      `record_consent`, `erase_subject`. New model: `campaigns` +compliance cols,
+      `contacts` +consent cols, `consent_events`, `deletion_requests`.
+      `ScoredLead.compliance` + `metrics.compliance`; `/api/compliance/{check,
+      suppress,erase}`; migration `babdcac57d60`. See `docs/compliance.md`.
+- [ ] Consent-capture flow + real send path (arrive with step 2.3/2.4, must go
+      through `outreach_gate`)
 
 SDR:
 - [x] `EnrichmentProvider` + `mock` + `web`; ICP format; companies/contacts/research_runs/leads

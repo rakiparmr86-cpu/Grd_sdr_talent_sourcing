@@ -92,6 +92,12 @@ class LeadScore(BaseModel):
     rationale: str = ""
 
 
+class ComplianceInfo(BaseModel):
+    region: str = "UNKNOWN"                 # EU | EEA | UK | US | IN | OTHER | UNKNOWN
+    outreach: str = "manual_only"           # allow | manual_only | block
+    reasons: list[str] = Field(default_factory=list)
+
+
 class ScoredLead(BaseModel):
     domain: str
     lead_id: int | None = None
@@ -102,6 +108,7 @@ class ScoredLead(BaseModel):
     capabilities_used: list[str] = Field(default_factory=list)
     issues: list[ResearchIssue] = Field(default_factory=list)
     gate_a: str = "human"          # deterministic route: "auto" | "human"
+    compliance: ComplianceInfo = Field(default_factory=ComplianceInfo)
     score: LeadScore
 
 
